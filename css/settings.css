@@ -1,0 +1,232 @@
+/* Settings Page Styles */
+.settings-container {
+    max-width: 900px;
+}
+
+.settings-section {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.settings-section h2 {
+    font-size: 1.2rem;
+    color: #2D3436;
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 0.8rem;
+    border-bottom: 2px solid #F5F7FA;
+}
+
+.settings-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+}
+
+.settings-form .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-form .form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #636E72;
+    margin-bottom: 0.4rem;
+}
+
+.settings-form .form-group input,
+.settings-form .form-group textarea,
+.settings-form .form-group select {
+    padding: 0.7rem;
+    border: 2px solid #E1E8ED;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.settings-form .form-group input:focus,
+.settings-form .form-group textarea:focus,
+.settings-form .form-group select:focus {
+    outline: none;
+    border-color: #87CEEB;
+    box-shadow: 0 0 0 3px rgba(135, 206, 235, 0.2);
+}
+
+.settings-form .form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.settings-form .form-group small {
+    font-size: 0.75rem;
+    color: #636E72;
+    margin-top: 0.3rem;
+}
+
+.password-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-group input {
+    flex: 1;
+    padding-right: 3rem;
+}
+
+.btn-toggle-password {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 5px;
+}
+
+.btn-toggle-password:hover {
+    transform: scale(1.1);
+}
+
+/* Preset Unit Pairs */
+.help-text {
+    font-size: 0.85rem;
+    color: #636E72;
+    margin: 0 0 1rem 0;
+}
+
+.preset-units-list {
+    margin-bottom: 1rem;
+}
+
+.preset-unit-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.8rem;
+    background: #F5F7FA;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    animation: slideInLeft 0.3s ease;
+}
+
+.preset-unit-row input {
+    padding: 0.5rem;
+    border: 1px solid #E1E8ED;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.preset-unit-row input:focus {
+    outline: none;
+    border-color: #87CEEB;
+}
+
+.preset-unit-row span {
+    text-align: center;
+    color: #636E72;
+    font-size: 0.9rem;
+}
+
+.btn-remove-preset {
+    padding: 0.4rem 0.8rem;
+    background: #FF6B6B;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.btn-remove-preset:hover {
+    background: #EE5A24;
+}
+
+.btn-add-unit {
+    padding: 0.6rem 1.2rem;
+    background: #90EE90;
+    color: #2D3436;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-add-unit:hover {
+    background: #6FCF6F;
+    transform: translateY(-2px);
+}
+
+/* Data Actions */
+.data-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-danger {
+    padding: 0.7rem 1.5rem;
+    background: #FF6B6B;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    background: #EE5A24;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+}
+
+/* Settings Save */
+.settings-save {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.btn-save {
+    padding: 1rem 3rem;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+}
+
+/* Settings Log */
+.text-center {
+    text-align: center;
+    color: #636E72;
+    padding: 2rem;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .settings-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .data-actions {
+        flex-direction: column;
+    }
+    
+    .data-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .preset-unit-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .preset-unit-row span {
+        display: none;
+    }
+}

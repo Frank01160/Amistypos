@@ -1,0 +1,33 @@
+amisty-pos/
+├── index.html                 # Login page
+├── pages/
+│   ├── pos.html              # Seller dashboard
+│   ├── manager.html          # Manager dashboard
+│   ├── inventory.html        # Stock management
+│   ├── reports.html          # Reports & analytics
+│   └── settings.html         # Configuration
+├── css/
+│   ├── general.css           # Theme system & global styles
+│   ├── animations.css        # Shared animations
+│   ├── login.css             # Login page styles
+│   ├── pos.css               # POS page styles
+│   ├── manager.css           # Manager dashboard styles
+│   ├── inventory.css         # Inventory styles
+│   ├── reports.css           # Reports styles
+│   ├── settings.css          # Settings styles
+│   └── responsive.css        # Responsive design
+├── js/
+│   ├── firebase-config.js    # Firebase setup
+│   ├── general.js            # Theme manager & utilities
+│   ├── auth.js               # Authentication
+│   ├── data-service.js       # Database operations
+│   ├── pos.js                # POS logic
+│   ├── manager.js            # Manager dashboard
+│   ├── inventory.js          # Inventory management
+│   ├── reports.js            # Reports generation
+│   ├── settings.js           # Settings management
+│   ├── receipt.js            # Receipt system
+│   ├── utils.js              # Utility functions
+│   └── animations.js         # Animation controls
+├── sounds/                   # Sound effects
+└── README.md

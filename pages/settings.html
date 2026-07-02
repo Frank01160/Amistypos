@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMISTY POS - Settings</title>
+    <link rel="stylesheet" href="../css/animations.css">
+    <link rel="stylesheet" href="../css/manager.css">
+    <link rel="stylesheet" href="../css/settings.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+    <div class="manager-layout">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="18" fill="none" stroke="#87CEEB" stroke-width="2"/>
+                        <path d="M12 20 L18 26 L28 14" stroke="#90EE90" stroke-width="3" fill="none"/>
+                    </svg>
+                </div>
+                <h2>AMISTY</h2>
+                <span class="user-role">Manager</span>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="manager.html">📊 Dashboard</a></li>
+                <li><a href="inventory.html">📦 Inventory</a></li>
+                <li><a href="reports.html">📈 Reports</a></li>
+                <li><a href="settings.html" class="active">⚙️ Settings</a></li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="logout()">
+                    <span>🚪</span>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-left">
+                    <button class="btn-menu-toggle" onclick="toggleSidebar()">☰</button>
+                    <h1>Settings</h1>
+                </div>
+            </header>
+
+            <div class="settings-container">
+                <!-- Company Information -->
+                <div class="settings-section">
+                    <h2>🏢 Company Information</h2>
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label>Company Name</label>
+                            <input type="text" id="companyName" placeholder="AMISTY COMPANY">
+                        </div>
+                        <div class="form-group">
+                            <label>Company Address</label>
+                            <input type="text" id="companyAddress" placeholder="Nairobi, Kenya">
+                        </div>
+                        <div class="form-group">
+                            <label>Company Phone</label>
+                            <input type="tel" id="companyPhone" placeholder="0700-000000">
+                        </div>
+                        <div class="form-group">
+                            <label>Receipt Footer Message</label>
+                            <textarea id="receiptFooter" rows="2" placeholder="Thank you for shopping with us!"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Settings -->
+                <div class="settings-section">
+                    <h2>🔒 Security</h2>
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label>Manager Password</label>
+                            <div class="password-input-group">
+                                <input type="password" id="managerPassword" placeholder="Enter new manager password">
+                                <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('managerPassword')">👁️</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Seller Password</label>
+                            <div class="password-input-group">
+                                <input type="password" id="sellerPassword" placeholder="Enter new seller password">
+                                <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('sellerPassword')">👁️</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Session Timeout (minutes)</label>
+                            <input type="number" id="sessionTimeout" min="5" max="60" placeholder="15">
+                        </div>
+                        <div class="form-group">
+                            <label>Max Login Attempts Before Lockout</label>
+                            <input type="number" id="maxLoginAttempts" min="3" max="10" placeholder="5">
+                        </div>
+                        <div class="form-group">
+                            <label>Lockout Duration (minutes)</label>
+                            <input type="number" id="lockoutDuration" min="5" max="120" placeholder="30">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Settings -->
+                <div class="settings-section">
+                    <h2>📦 Inventory Settings</h2>
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label>Low Stock Alert Threshold</label>
+                            <input type="number" id="lowStockThreshold" min="1" placeholder="10">
+                            <small>Alert when stock falls below this number</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Product Code Prefix</label>
+                            <input type="text" id="productCodePrefix" placeholder="AMY-">
+                            <small>Example: AMY-INS-001</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Currency Symbol</label>
+                            <input type="text" id="currency" placeholder="KSh">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preset Unit Pairs -->
+                <div class="settings-section">
+                    <h2>📏 Preset Unit Conversions</h2>
+                    <p class="help-text">Common unit pairs that appear as suggestions when adding products</p>
+                    <div id="presetUnitPairs" class="preset-units-list">
+                        <!-- Dynamic content -->
+                    </div>
+                    <button class="btn-add-unit" onclick="addPresetUnitPair()">
+                        ➕ Add Preset Unit Pair
+                    </button>
+                </div>
+
+                <!-- Data Management -->
+                <div class="settings-section">
+                    <h2>💾 Data Management</h2>
+                    <div class="data-actions">
+                        <button class="btn-secondary" onclick="exportAllData()">
+                            📤 Export All Data (JSON)
+                        </button>
+                        <button class="btn-secondary" onclick="importAllData()">
+                            📥 Import Data (JSON)
+                        </button>
+                        <button class="btn-danger" onclick="clearAllData()">
+                            🗑️ Clear All Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Activity Log -->
+                <div class="settings-section">
+                    <h2>📋 Recent Settings Changes</h2>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date/Time</th>
+                                    <th>Setting Changed</th>
+                                    <th>Old Value</th>
+                                    <th>New Value</th>
+                                    <th>Changed By</th>
+                                </tr>
+                            </thead>
+                            <tbody id="settingsLogBody">
+                                <tr>
+                                    <td colspan="5" class="text-center">No changes recorded</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="settings-save">
+                    <button class="btn-primary btn-save" onclick="saveAllSettings()">
+                        💾 Save All Settings
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/data-service.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/settings.js"></script>
+</body>
+</html>

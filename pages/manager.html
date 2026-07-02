@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMISTY POS - Manager Dashboard</title>
+    <link rel="stylesheet" href="../css/animations.css">
+    <link rel="stylesheet" href="../css/manager.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+    <div class="manager-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="18" fill="none" stroke="#87CEEB" stroke-width="2"/>
+                        <path d="M12 20 L18 26 L28 14" stroke="#90EE90" stroke-width="3" fill="none"/>
+                    </svg>
+                </div>
+                <h2>AMISTY</h2>
+                <span class="user-role">Manager</span>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="manager.html" class="active" data-page="dashboard">
+                        <span class="menu-icon">📊</span>
+                        <span class="menu-text">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="inventory.html" data-page="inventory">
+                        <span class="menu-icon">📦</span>
+                        <span class="menu-text">Inventory</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="reports.html" data-page="reports">
+                        <span class="menu-icon">📈</span>
+                        <span class="menu-text">Reports</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="settings.html" data-page="settings">
+                        <span class="menu-icon">⚙️</span>
+                        <span class="menu-text">Settings</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="offline-indicator" id="offlineBadge" style="display: none;">
+                    <span>⏳ Offline Queue: </span>
+                    <span id="queueCount">0</span>
+                </div>
+                <button class="btn-logout" onclick="logout()">
+                    <span>🚪</span>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="content-header">
+                <div class="header-left">
+                    <button class="btn-menu-toggle" onclick="toggleSidebar()">☰</button>
+                    <h1>Dashboard Overview</h1>
+                </div>
+                <div class="header-right">
+                    <span class="current-date" id="currentDate"></span>
+                    <span class="current-time" id="currentTime"></span>
+                </div>
+            </header>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card animate-slide-up">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #87CEEB, #5BA3D9);">
+                        <svg width="30" height="30" viewBox="0 0 30 30">
+                            <circle cx="15" cy="15" r="12" fill="white" opacity="0.3"/>
+                            <text x="15" y="20" text-anchor="middle" fill="white" font-size="14" font-weight="bold">KSh</text>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Today's Sales</h3>
+                        <p class="stat-value" id="todaySales">KSh 0</p>
+                        <span class="stat-change" id="salesChange">+0% from yesterday</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card animate-slide-up" style="animation-delay: 0.1s;">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #90EE90, #6FCF6F);">
+                        <svg width="30" height="30" viewBox="0 0 30 30">
+                            <rect x="5" y="8" width="20" height="15" rx="2" fill="white" opacity="0.3"/>
+                            <line x1="10" y1="13" x2="20" y2="13" stroke="white" stroke-width="2"/>
+                            <line x1="10" y1="17" x2="17" y2="17" stroke="white" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Transactions</h3>
+                        <p class="stat-value" id="todayTransactions">0</p>
+                        <span class="stat-change" id="transactionsChange">0 transactions today</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card animate-slide-up" style="animation-delay: 0.2s;">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #FECA57, #F79F1F);">
+                        <svg width="30" height="30" viewBox="0 0 30 30">
+                            <rect x="4" y="6" width="22" height="18" rx="2" fill="white" opacity="0.3"/>
+                            <path d="M4 12 L15 18 L26 12" stroke="white" stroke-width="2" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Products</h3>
+                        <p class="stat-value" id="totalProducts">0</p>
+                        <span class="stat-change" id="productsChange">Across all categories</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card animate-slide-up" style="animation-delay: 0.3s;">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #FF6B6B, #EE5A24);">
+                        <svg width="30" height="30" viewBox="0 0 30 30">
+                            <path d="M15 5 L25 25 L5 25 Z" fill="white" opacity="0.3"/>
+                            <text x="15" y="20" text-anchor="middle" fill="white" font-size="12" font-weight="bold">!</text>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Low Stock Items</h3>
+                        <p class="stat-value" id="lowStockCount">0</p>
+                        <span class="stat-change" id="lowStockAlert" style="color: #FF6B6B;">Needs attention</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="action-btn" onclick="window.location.href='inventory.html'">
+                    <span>➕</span> Add Product
+                </button>
+                <button class="action-btn" onclick="window.location.href='inventory.html'">
+                    <span>📥</span> Bulk Import
+                </button>
+                <button class="action-btn" onclick="window.location.href='reports.html'">
+                    <span>📊</span> View Reports
+                </button>
+                <button class="action-btn" onclick="window.location.href='settings.html'">
+                    <span>⚙️</span> Settings
+                </button>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h2>Recent Transactions</h2>
+                    <button class="btn-view-all" onclick="window.location.href='reports.html'">View All →</button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Receipt No.</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Payment</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentTransactionsBody">
+                            <tr class="table-loading">
+                                <td colspan="6">
+                                    <div class="skeleton" style="height:20px;width:100%;"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Inventory Activity Log -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h2>Inventory Activity Log</h2>
+                    <div class="filter-group">
+                        <select id="logFilter" onchange="loadInventoryLogs()">
+                            <option value="all">All Actions</option>
+                            <option value="add">Stock Added</option>
+                            <option value="remove">Stock Removed</option>
+                            <option value="adjust">Stock Adjusted</option>
+                            <option value="price">Price Changed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Action</th>
+                                <th>Product</th>
+                                <th>Old Value</th>
+                                <th>New Value</th>
+                                <th>Reason</th>
+                                <th>User</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryLogsBody">
+                            <tr class="table-loading">
+                                <td colspan="7">
+                                    <div class="skeleton" style="height:20px;width:100%;"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sales Chart (Simple) -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h2>Sales Overview - Last 7 Days</h2>
+                </div>
+                <div class="chart-container" id="salesChart">
+                    <canvas id="salesChartCanvas" width="600" height="250"></canvas>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/data-service.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/manager.js"></script>
+</body>
+</html>

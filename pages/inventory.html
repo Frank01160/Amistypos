@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMISTY POS - Inventory Management</title>
+    <link rel="stylesheet" href="../css/animations.css">
+    <link rel="stylesheet" href="../css/manager.css">
+    <link rel="stylesheet" href="../css/inventory.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+    <div class="manager-layout">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="18" fill="none" stroke="#87CEEB" stroke-width="2"/>
+                        <path d="M12 20 L18 26 L28 14" stroke="#90EE90" stroke-width="3" fill="none"/>
+                    </svg>
+                </div>
+                <h2>AMISTY</h2>
+                <span class="user-role">Manager</span>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="manager.html">📊 Dashboard</a></li>
+                <li><a href="inventory.html" class="active">📦 Inventory</a></li>
+                <li><a href="reports.html">📈 Reports</a></li>
+                <li><a href="settings.html">⚙️ Settings</a></li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="logout()">
+                    <span>🚪</span>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-left">
+                    <button class="btn-menu-toggle" onclick="toggleSidebar()">☰</button>
+                    <h1>Inventory Management</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn-primary" onclick="showAddProductModal()">
+                        ➕ Add New Product
+                    </button>
+                    <button class="btn-secondary" onclick="showBulkImportModal()">
+                        📥 Bulk Import CSV
+                    </button>
+                    <button class="btn-secondary" onclick="exportInventory()">
+                        📤 Export Inventory
+                    </button>
+                </div>
+            </header>
+
+            <!-- Search and Filters -->
+            <div class="inventory-filters">
+                <div class="search-box">
+                    <input type="text" id="inventorySearch" placeholder="Search products by name, code, or category..." oninput="filterInventory()">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <select id="categoryFilter" onchange="filterInventory()">
+                    <option value="all">All Categories</option>
+                </select>
+                <select id="stockFilter" onchange="filterInventory()">
+                    <option value="all">All Stock Levels</option>
+                    <option value="low">Low Stock</option>
+                    <option value="out">Out of Stock</option>
+                    <option value="available">In Stock</option>
+                </select>
+            </div>
+
+            <!-- Products Table -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h2>Products List</h2>
+                    <span class="product-count" id="productCount">0 products</span>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Product Name</th>
+                                <th>Category</th>
+                                <th>Stock</th>
+                                <th>Buying Price</th>
+                                <th>Selling Price</th>
+                                <th>Profit Margin</th>
+                                <th>Unit Pairs</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <tr class="table-loading">
+                                <td colspan="10">
+                                    <div class="skeleton" style="height:20px;width:100%;"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Product Modal -->
+    <div class="modal-overlay" id="productModal" style="display: none;">
+        <div class="modal-content product-modal">
+            <h2 id="modalTitle">Add New Product</h2>
+            <form id="productForm" onsubmit="saveProduct(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Product Name *</label>
+                        <input type="text" id="productName" required placeholder="Enter product name">
+                    </div>
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <div class="category-input-group">
+                            <select id="productCategory" required onchange="handleCategoryChange()">
+                                <option value="">Select category</option>
+                            </select>
+                            <input type="text" id="newCategory" placeholder="Or add new category" style="display:none;">
+                            <button type="button" class="btn-small" onclick="toggleNewCategory()">+ New</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Buying Price (KSh) *</label>
+                        <input type="number" id="buyingPrice" required step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Selling Price (KSh) *</label>
+                        <input type="number" id="sellingPrice" required step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Initial Stock *</label>
+                        <input type="number" id="initialStock" required min="0" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Expiry Date (Optional)</label>
+                        <input type="date" id="expiryDate">
+                    </div>
+                </div>
+
+                <!-- Unit Pairs Section -->
+                <div class="unit-pairs-section">
+                    <h3>Unit Pairs (Optional)</h3>
+                    <p class="help-text">Define unit conversions like "1 bag = 100 kg"</p>
+                    <div id="unitPairsList"></div>
+                    <button type="button" class="btn-add-unit" onclick="addUnitPair()">
+                        ➕ Add Unit Pair
+                    </button>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeProductModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Import Modal -->
+    <div class="modal-overlay" id="bulkImportModal" style="display: none;">
+        <div class="modal-content">
+            <h2>Bulk Import Products</h2>
+            <div class="import-instructions">
+                <h4>CSV Format:</h4>
+                <code>name,category,buyingPrice,sellingPrice,stock,unitPairs</code>
+                <p>Example: <code>Maize Meal,Feeds,2500,2800,50,"1 bag = 100 kg"</code></p>
+            </div>
+            <input type="file" id="csvFile" accept=".csv" onchange="handleCSVImport(event)">
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeBulkImportModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Adjustment Modal -->
+    <div class="modal-overlay" id="stockAdjustModal" style="display: none;">
+        <div class="modal-content">
+            <h2>Adjust Stock</h2>
+            <form id="stockAdjustForm" onsubmit="adjustStock(event)">
+                <input type="hidden" id="adjustProductId">
+                <div class="form-group">
+                    <label>Current Stock:</label>
+                    <p id="currentStock">0</p>
+                </div>
+                <div class="form-group">
+                    <label>New Stock Value *</label>
+                    <input type="number" id="newStockValue" required min="0">
+                </div>
+                <div class="form-group">
+                    <label>Reason for Adjustment *</label>
+                    <select id="adjustReason" required>
+                        <option value="">Select reason</option>
+                        <option value="Physical count">Physical count correction</option>
+                        <option value="Damaged">Damaged goods</option>
+                        <option value="Expired">Expired products</option>
+                        <option value="Theft">Theft/Loss</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeStockAdjustModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Update Stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/data-service.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/inventory.js"></script>
+</body>
+</html>
