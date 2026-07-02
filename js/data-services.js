@@ -1,112 +1,164 @@
-// Data Service - CRUD Operations
+// Data Service for AMISTY POS
 class DataService {
     constructor() {
-        this.offlineQueue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
-        this.isOnline = navigator.onLine;
-        
-        window.addEventListener('online', () => {
-            this.isOnline = true;
-            this.processOfflineQueue();
-        });
-        
-        window.addEventListener('offline', () => {
-            this.isOnline = false;
-        });
+        this.ready = false;
+        this.init();
     }
 
-    // Products CRUD
+    init() {
+        // Wait for Firebase to initialize
+        setTimeout(() => {
+            if (typeof db !== 'undefined' && db !== null) {
+                this.ready = true;
+                console.log('✅ DataService ready - Using Firebase');
+            } else {
+                console.log('⚠️ DataService using localStorage fallback');
+                this.initLocalStorage();
+                this.ready = true;
+            }
+        }, 1000);
+    }
+
+    initLocalStorage() {
+        if (!localStorage.getItem('amisty_pos_products')) {
+            localStorage.setItem('amisty_pos_products', JSON.stringify([]));
+        }
+        if (!localStorage.getItem('amisty_pos_sales')) {
+            localStorage.setItem('amisty_pos_sales', JSON.stringify([]));
+        }
+        if (!localStorage.getItem('amisty_pos_inventory_log')) {
+            localStorage.setItem('amisty_pos_inventory_log', JSON.stringify([]));
+        }
+    }
+
+    // ===== PRODUCTS =====
     async getProducts() {
         try {
-            if (this.isOnline && isFirebaseInitialized && db) {
+            if (db && isFirebaseInitialized) {
+                console.log('📦 Fetching products from Firebase...');
                 const snapshot = await db.collection('products').orderBy('name').get();
-                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const products = [];
+                snapshot.forEach(doc => {
+                    products.push({ id: doc.id, ...doc.data() });
+                });
+                console.log(`✅ Found ${products.length} products`);
+                return products;
             } else {
-                return JSON.parse(localStorage.getItem('amisty_pos_products') || '[]');
+                console.log('📦 Fetching products from localStorage...');
+                const data = localStorage.getItem('amisty_pos_products');
+                return data ? JSON.parse(data) : [];
             }
         } catch (error) {
-            console.error('Error fetching products:', error);
-            return JSON.parse(localStorage.getItem('amisty_pos_products') || '[]');
+            console.error('❌ Error getting products:', error);
+            const data = localStorage.getItem('amisty_pos_products');
+            return data ? JSON.parse(data) : [];
         }
     }
 
     async addProduct(product) {
-        product.createdAt = new Date().toISOString();
-        product.updatedAt = new Date().toISOString();
-        
         try {
-            if (this.isOnline && isFirebaseInitialized && db) {
+            product.createdAt = new Date().toISOString();
+            product.updatedAt = new Date().toISOString();
+
+            console.log('➕ Adding product:', product.name);
+
+            if (db && isFirebaseInitialized) {
                 const docRef = await db.collection('products').add(product);
                 product.id = docRef.id;
+                console.log('✅ Product added to Firebase with ID:', product.id);
             } else {
-                const products = await this.getProducts();
                 product.id = 'prod_' + Date.now();
+                const products = await this.getProducts();
                 products.push(product);
                 localStorage.setItem('amisty_pos_products', JSON.stringify(products));
-                this.addToOfflineQueue({ type: 'addProduct', data: product });
+                console.log('✅ Product added to localStorage');
             }
-            await this.logInventoryChange('add', product.id, product.name, 0, product.stock, 'New product added');
+
+            // Log the addition
+            await this.logInventoryChange(
+                'add', 
+                product.id, 
+                product.name, 
+                0, 
+                typeof product.stock === 'object' ? product.stock.primaryAmount : product.stock, 
+                'New product added'
+            );
+
             return product;
         } catch (error) {
-            console.error('Error adding product:', error);
+            console.error('❌ Error adding product:', error);
             throw error;
         }
     }
 
     async updateProduct(productId, updates) {
-        updates.updatedAt = new Date().toISOString();
-        
         try {
-            if (this.isOnline && isFirebaseInitialized && db) {
+            updates.updatedAt = new Date().toISOString();
+            console.log('🔄 Updating product:', productId);
+
+            if (db && isFirebaseInitialized) {
                 await db.collection('products').doc(productId).update(updates);
+                console.log('✅ Product updated in Firebase');
             } else {
                 const products = await this.getProducts();
                 const index = products.findIndex(p => p.id === productId);
                 if (index !== -1) {
                     products[index] = { ...products[index], ...updates };
                     localStorage.setItem('amisty_pos_products', JSON.stringify(products));
+                    console.log('✅ Product updated in localStorage');
                 }
-                this.addToOfflineQueue({ type: 'updateProduct', data: { id: productId, updates } });
             }
         } catch (error) {
-            console.error('Error updating product:', error);
+            console.error('❌ Error updating product:', error);
             throw error;
         }
     }
 
     async deleteProduct(productId) {
         try {
-            if (this.isOnline && isFirebaseInitialized && db) {
+            console.log('🗑️ Deleting product:', productId);
+
+            if (db && isFirebaseInitialized) {
                 await db.collection('products').doc(productId).delete();
+                console.log('✅ Product deleted from Firebase');
             } else {
                 const products = await this.getProducts();
                 const filtered = products.filter(p => p.id !== productId);
                 localStorage.setItem('amisty_pos_products', JSON.stringify(filtered));
-                this.addToOfflineQueue({ type: 'deleteProduct', data: { id: productId } });
+                console.log('✅ Product deleted from localStorage');
             }
         } catch (error) {
-            console.error('Error deleting product:', error);
+            console.error('❌ Error deleting product:', error);
             throw error;
         }
     }
 
-    // Sales CRUD
+    async getProductById(productId) {
+        const products = await this.getProducts();
+        return products.find(p => p.id === productId) || null;
+    }
+
+    // ===== SALES =====
     async addSale(sale) {
-        sale.timestamp = new Date().toISOString();
-        sale.receiptNumber = await this.generateReceiptNumber();
-        
         try {
-            if (this.isOnline && isFirebaseInitialized && db) {
+            sale.timestamp = new Date().toISOString();
+            sale.receiptNumber = await this.generateReceiptNumber();
+
+            console.log('💰 Adding sale:', sale.receiptNumber);
+
+            if (db && isFirebaseInitialized) {
                 const docRef = await db.collection('sales').add(sale);
                 sale.id = docRef.id;
+                console.log('✅ Sale added to Firebase');
             } else {
-                const sales = JSON.parse(localStorage.getItem('amisty_pos_sales') || '[]');
                 sale.id = 'sale_' + Date.now();
+                const sales = JSON.parse(localStorage.getItem('amisty_pos_sales') || '[]');
                 sales.push(sale);
                 localStorage.setItem('amisty_pos_sales', JSON.stringify(sales));
-                this.addToOfflineQueue({ type: 'addSale', data: sale });
+                console.log('✅ Sale added to localStorage');
             }
-            
-            // Update stock
+
+            // Update stock for each item
             for (const item of sale.items) {
                 const product = await this.getProductById(item.productId);
                 if (product) {
@@ -114,223 +166,176 @@ class DataService {
                     await this.updateProduct(item.productId, { stock: newStock });
                 }
             }
-            
+
             return sale;
         } catch (error) {
-            console.error('Error adding sale:', error);
+            console.error('❌ Error adding sale:', error);
             throw error;
         }
     }
 
-    calculateNewStock(product, saleItem) {
-        if (product.unitPairs && product.unitPairs.length > 0) {
-            const primaryUnit = product.unitPairs[0];
-            if (saleItem.unit === primaryUnit.unit) {
-                // Sold in primary unit, reduce directly
-                return {
-                    primaryAmount: product.stock.primaryAmount - saleItem.quantity,
-                    secondaryAmount: product.stock.secondaryAmount - saleItem.quantity
-                };
-            } else {
-                // Sold in secondary unit, convert
-                const reductionInPrimary = saleItem.quantity / primaryUnit.conversionRate;
-                const newPrimary = product.stock.primaryAmount - reductionInPrimary;
-                const newSecondary = newPrimary * primaryUnit.conversionRate;
-                return {
-                    primaryAmount: newPrimary,
-                    secondaryAmount: newSecondary
-                };
-            }
-        } else {
-            return product.stock - saleItem.quantity;
-        }
-    }
-
-    async getSales(filters = {}) {
+    async getSales() {
         try {
-            let sales;
-            if (this.isOnline && isFirebaseInitialized && db) {
-                let query = db.collection('sales');
-                
-                if (filters.startDate) {
-                    query = query.where('timestamp', '>=', filters.startDate);
-                }
-                if (filters.endDate) {
-                    query = query.where('timestamp', '<=', filters.endDate);
-                }
-                if (filters.paymentMethod) {
-                    query = query.where('paymentMethod', '==', filters.paymentMethod);
-                }
-                
-                const snapshot = await query.orderBy('timestamp', 'desc').get();
-                sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            if (db && isFirebaseInitialized) {
+                console.log('📊 Fetching sales from Firebase...');
+                const snapshot = await db.collection('sales')
+                    .orderBy('timestamp', 'desc')
+                    .get();
+                const sales = [];
+                snapshot.forEach(doc => {
+                    sales.push({ id: doc.id, ...doc.data() });
+                });
+                console.log(`✅ Found ${sales.length} sales`);
+                return sales;
             } else {
-                sales = JSON.parse(localStorage.getItem('amisty_pos_sales') || '[]');
+                const data = localStorage.getItem('amisty_pos_sales');
+                return data ? JSON.parse(data) : [];
             }
-            
-            // Apply additional filters
-            if (filters.category) {
-                sales = sales.filter(sale => 
-                    sale.items.some(item => item.category === filters.category)
-                );
-            }
-            
-            return sales;
         } catch (error) {
-            console.error('Error fetching sales:', error);
+            console.error('❌ Error getting sales:', error);
             return [];
         }
     }
 
-    async generateReceiptNumber() {
-        const settings = await getSettings();
-        const prefix = settings?.productCodePrefix || 'AMY-';
-        
-        try {
-            let lastNumber = 0;
-            if (this.isOnline && isFirebaseInitialized && db) {
-                const snapshot = await db.collection('sales')
-                    .orderBy('receiptNumber', 'desc')
-                    .limit(1)
-                    .get();
-                
-                if (!snapshot.empty) {
-                    const lastReceipt = snapshot.docs[0].data().receiptNumber;
-                    const match = lastReceipt.match(/\d+/);
-                    if (match) lastNumber = parseInt(match[0]);
-                }
+    calculateNewStock(product, saleItem) {
+        if (product.unitPairs && product.unitPairs.length > 0 && 
+            product.stock && typeof product.stock === 'object') {
+            
+            const primaryUnit = product.unitPairs[0];
+            
+            if (saleItem.unit === primaryUnit.primaryUnit) {
+                // Sold in primary unit (e.g., bags)
+                const newPrimary = (product.stock.primaryAmount || 0) - saleItem.quantity;
+                const newSecondary = newPrimary * primaryUnit.conversionRate;
+                return {
+                    primaryAmount: Math.max(0, newPrimary),
+                    secondaryAmount: Math.max(0, newSecondary)
+                };
             } else {
-                const sales = JSON.parse(localStorage.getItem('amisty_pos_sales') || '[]');
-                if (sales.length > 0) {
-                    const lastReceipt = sales[sales.length - 1].receiptNumber;
-                    const match = lastReceipt.match(/\d+/);
-                    if (match) lastNumber = parseInt(match[0]);
+                // Sold in secondary unit (e.g., kg)
+                const reductionInPrimary = saleItem.quantity / primaryUnit.conversionRate;
+                const newPrimary = (product.stock.primaryAmount || 0) - reductionInPrimary;
+                const newSecondary = (product.stock.secondaryAmount || 0) - saleItem.quantity;
+                return {
+                    primaryAmount: Math.max(0, newPrimary),
+                    secondaryAmount: Math.max(0, newSecondary)
+                };
+            }
+        } else {
+            // Simple stock
+            const currentStock = typeof product.stock === 'object' ? 
+                (product.stock.primaryAmount || 0) : (product.stock || 0);
+            return Math.max(0, currentStock - saleItem.quantity);
+        }
+    }
+
+    async generateReceiptNumber() {
+        try {
+            const sales = await this.getSales();
+            const settings = JSON.parse(localStorage.getItem('amisty_pos_settings') || '{}');
+            const prefix = settings.productCodePrefix || 'AMY-';
+            
+            // Get the last receipt number
+            let lastNumber = 0;
+            if (sales.length > 0) {
+                const lastReceipt = sales[0].receiptNumber;
+                const match = lastReceipt.match(/\d+/);
+                if (match) {
+                    lastNumber = parseInt(match[0]);
                 }
             }
             
             return `${prefix}${String(lastNumber + 1).padStart(6, '0')}`;
         } catch (error) {
-            return `${prefix}${String(Date.now()).slice(-6)}`;
+            return `AMY-${String(Date.now()).slice(-6)}`;
         }
     }
 
-    // Inventory Log
+    // ===== INVENTORY LOGS =====
     async logInventoryChange(action, productId, productName, oldValue, newValue, reason = '') {
-        const log = {
-            action,
-            productId,
-            productName,
-            oldValue,
-            newValue,
-            reason,
-            timestamp: new Date().toISOString(),
-            user: JSON.parse(sessionStorage.getItem('currentUser'))?.role || 'unknown'
-        };
-        
         try {
-            if (this.isOnline && isFirebaseInitialized && db) {
+            const log = {
+                action,
+                productId,
+                productName,
+                oldValue,
+                newValue,
+                reason,
+                timestamp: new Date().toISOString(),
+                user: 'manager'
+            };
+
+            if (db && isFirebaseInitialized) {
                 await db.collection('inventory_logs').add(log);
+                console.log('✅ Log saved to Firebase');
             } else {
                 const logs = JSON.parse(localStorage.getItem('amisty_pos_inventory_log') || '[]');
-                logs.push(log);
+                logs.unshift(log);
+                if (logs.length > 100) logs.pop();
                 localStorage.setItem('amisty_pos_inventory_log', JSON.stringify(logs));
+                console.log('✅ Log saved to localStorage');
             }
         } catch (error) {
-            console.error('Error logging inventory change:', error);
+            console.error('❌ Error logging:', error);
         }
     }
 
     async getInventoryLogs() {
         try {
-            if (this.isOnline && isFirebaseInitialized && db) {
+            if (db && isFirebaseInitialized) {
                 const snapshot = await db.collection('inventory_logs')
                     .orderBy('timestamp', 'desc')
                     .limit(100)
                     .get();
-                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const logs = [];
+                snapshot.forEach(doc => {
+                    logs.push({ id: doc.id, ...doc.data() });
+                });
+                return logs;
             } else {
-                return JSON.parse(localStorage.getItem('amisty_pos_inventory_log') || '[]');
+                const data = localStorage.getItem('amisty_pos_inventory_log');
+                return data ? JSON.parse(data) : [];
             }
         } catch (error) {
-            console.error('Error fetching inventory logs:', error);
+            console.error('❌ Error getting logs:', error);
             return [];
         }
     }
 
-    // Offline Queue Management
-    addToOfflineQueue(operation) {
-        this.offlineQueue.push({
-            ...operation,
-            queuedAt: new Date().toISOString()
-        });
-        localStorage.setItem('offlineQueue', JSON.stringify(this.offlineQueue));
-        this.updateOfflineBadge();
-    }
-
-    async processOfflineQueue() {
-        if (this.offlineQueue.length === 0) return;
-        
-        showToast(`Syncing ${this.offlineQueue.length} offline transactions...`, 'info');
-        
-        const queue = [...this.offlineQueue];
-        this.offlineQueue = [];
-        localStorage.setItem('offlineQueue', JSON.stringify([]));
-        this.updateOfflineBadge();
-        
-        for (const operation of queue) {
-            try {
-                switch (operation.type) {
-                    case 'addProduct':
-                        await this.addProduct(operation.data);
-                        break;
-                    case 'updateProduct':
-                        await this.updateProduct(operation.data.id, operation.data.updates);
-                        break;
-                    case 'addSale':
-                        await this.addSale(operation.data);
-                        break;
-                    // Add other cases as needed
+    // ===== SETTINGS =====
+    async getSettings() {
+        try {
+            if (db && isFirebaseInitialized) {
+                const doc = await db.collection('settings').doc('app_settings').get();
+                if (doc.exists) {
+                    return doc.data();
                 }
-            } catch (error) {
-                console.error('Sync error:', error);
-                this.offlineQueue.push(operation);
-                localStorage.setItem('offlineQueue', JSON.stringify(this.offlineQueue));
             }
+            
+            const data = localStorage.getItem('amisty_pos_settings');
+            return data ? JSON.parse(data) : null;
+        } catch (error) {
+            console.error('❌ Error getting settings:', error);
+            const data = localStorage.getItem('amisty_pos_settings');
+            return data ? JSON.parse(data) : null;
         }
-        
-        if (this.offlineQueue.length === 0) {
-            showToast('All transactions synced successfully!', 'success');
-        } else {
-            showToast(`${this.offlineQueue.length} transactions failed to sync`, 'error');
-        }
-        this.updateOfflineBadge();
     }
 
-    updateOfflineBadge() {
-        const badge = document.getElementById('offlineBadge');
-        if (badge) {
-            if (this.offlineQueue.length > 0) {
-                badge.textContent = this.offlineQueue.length;
-                badge.style.display = 'block';
-            } else {
-                badge.style.display = 'none';
+    async saveSettings(settings) {
+        try {
+            if (db && isFirebaseInitialized) {
+                await db.collection('settings').doc('app_settings').set(settings);
+                console.log('✅ Settings saved to Firebase');
             }
+            
+            localStorage.setItem('amisty_pos_settings', JSON.stringify(settings));
+            console.log('✅ Settings saved to localStorage');
+        } catch (error) {
+            console.error('❌ Error saving settings:', error);
+            throw error;
         }
-    }
-
-    // Categories
-    async getCategories() {
-        const products = await this.getProducts();
-        const categories = [...new Set(products.map(p => p.category))];
-        return categories.sort();
-    }
-
-    // Product by ID
-    async getProductById(id) {
-        const products = await this.getProducts();
-        return products.find(p => p.id === id) || null;
     }
 }
 
-// Global instance
+// Create global instance
 const dataService = new DataService();
